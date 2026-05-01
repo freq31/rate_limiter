@@ -1,0 +1,37 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "my-project"
+version = "0.1.0"
+description = "A short description of your project"
+readme = "README.md"
+requires-python = ">=3.14"
+license = { text = "MIT" }
+
+authors = [
+  { name = "Aditya Raj", email = "aditya2331vvrs@gmail.com" }
+]
+
+dependencies = [
+  "pydantic"
+]
+
+[project.optional-dependencies]
+dev = [
+  "ruff",
+  "mypy",
+  "black",
+  "pre-commit",
+  "pytest",
+  "pytest-asyncio",
+  "testcontainers[redis]"
+]
+
+[project.urls]
+Homepage = "https://github.com/freq31/rate_limiter"
+Repository = "https://github.com/freq31/rate_limiter"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src"]
