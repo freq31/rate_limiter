@@ -82,8 +82,8 @@ class TokenBucketInRedis(TokenBucket):
         self.__lock = asyncio.Lock()
 
     async def execute(self, client_id: str) -> Response:
-        # Implement the fixed window algorithm logic here
-        return Response(allowed=True)
+        # TODO(Phase 2): implement via atomic Redis Lua script (lazy refill + consume)
+        return get_response(allowed=True, remaining_requests=0, reset_time=0)
 
     async def reset(self, client_id: str) -> bool:
         """Reset the request count for the given user."""

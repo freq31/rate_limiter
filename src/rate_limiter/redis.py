@@ -18,10 +18,8 @@ class RedisRateLimiter(RateLimiter):
         )
 
     async def get_response(self, client: Client) -> Response:
-        # Implement the Redis rate limiting logic here
-        # This is a placeholder implementation and should be replaced with actual logic
-        return Response(allowed=True)
+        return await self.__algorithm.execute(client.uId)
 
     async def reset(self, client: Client):
         """Reset the request count for the given user."""
-        pass
+        return await self.__algorithm.reset(client.uId)
