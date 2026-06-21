@@ -1,10 +1,12 @@
 import asyncio
 import time
+import uuid
 
 from redis.asyncio import Redis
 from src.algorithms.memory import FixedWindowState, SlidingWindowState
 from src.rate_limiter.request import Rules
 from src.rate_limiter.response import Response, get_response
+from src.scripts.sliding_window import _SLIDING_WINDOW_LUA
 from .base import Algorithm
 
 
@@ -128,14 +130,52 @@ class SlidingWindowInMemory(SlidingWindow):
 class SlidingWindowInRedis(SlidingWindow):
     def __init__(self, rules: Rules, redis_client: Redis):
         self.__rules = rules
-        self.__request_count: dict[str, SlidingWindowState] = {}
-        self.__lock = asyncio.Lock()
-        self.__redis_client = redis_client
+        self.__redis = redis_client
+        self.__script = self.__redis.register_script(_SLIDING_WINDOW_LUA)
+
+    def _key(self, client_id: str) -> str:
+        return f"rl:sliding_window:{client_id}"
 
     async def execute(self, client_id: str) -> Response:
-        # TODO(Phase 2): implement via Redis sorted set (ZREMRANGEBYSCORE + ZADD + ZCARD)
-        return get_response(allowed=True, remaining_requests=0, reset_time=0)
+        try:
+            current_time = time.time()
+
+            allowed, current, oldest_timestamp = await self.__script(
+                keys=[self._key(client_id)],
+                args=[
+                    self.__rules.max_requests,
+                    current_time - self.__rules.time_window,
+                    current_time,
+                    uuid.uuid4().hex,
+                    self.__rules.time_window,
+                ],
+            )
+
+            if allowed == 1:
+                remaining_requests = max(0, int(self.__rules.max_requests - current))
+                return get_response(
+                    allowed=True,
+                    remaining_requests=remaining_requests,
+                    reset_time=0,
+                )
+            else:
+                time_diff = current_time - float(oldest_timestamp)
+                reset_time = self.__rules.time_window - time_diff
+                return get_response(
+                    allowed=False,
+                    remaining_requests=0,
+                    reset_time=reset_time,
+                )
+
+        except Exception as e:
+            print(f"Error executing sliding window for client {client_id}: {e}")
+            return get_response(allowed=False, remaining_requests=0, reset_time=0)
 
     async def reset(self, client_id: str) -> bool:
         """Reset the request count for the given user."""
-        return True
+        try:
+            await self.__redis.delete(self._key(client_id))
+            return True
+        except Exception as e:
+            print(f"Error resetting client {client_id}: {e}")
+            return False

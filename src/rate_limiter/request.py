@@ -18,5 +18,5 @@ class Client(BaseModel):
 
 
 class Rules(BaseModel):
-    max_requests: float
-    time_window: float  # in seconds
+    max_requests: int
+    time_window: int  # in seconds

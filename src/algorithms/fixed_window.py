@@ -101,7 +101,7 @@ class FixedWindowInRedis(FixedWindow):
         try:
             current, ttl = await self.__script(
                 keys=[self._key(client_id)],
-                args=[int(self.__rules.time_window)],
+                args=[self.__rules.time_window],
             )
             # ttl is -1 only if the key somehow has no expiry set; fall back
             # to the full window so callers still get a sane reset_time.
