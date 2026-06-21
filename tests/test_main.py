@@ -1,6 +1,8 @@
 import pytest
 from unittest.mock import MagicMock
 
+from redis.asyncio import Redis
+
 from src.main import RateLimiterOrchestrator, RateLimiterFactory
 from src.rate_limiter.request import (
     AlgorithmType,
@@ -26,13 +28,25 @@ class TestRateLimiterFactory:
 
     def test_create_redis_rate_limiter(self):
         """Test creating a Redis rate limiter"""
+        # Redis() constructs lazily and does not connect, so no live server
+        # is needed just to build the limiter.
         rate_limiter = RateLimiterFactory.create(
             RateLimiterType.REDIS,
             AlgorithmType.FIXED_WINDOW,
             Rules(max_requests=1, time_window=60),
+            Redis(),
         )
         assert rate_limiter is not None
         assert isinstance(rate_limiter, RateLimiter)
+
+    def test_create_redis_rate_limiter_without_client_raises(self):
+        """Redis backend requires an explicit client (bring-your-own)."""
+        with pytest.raises(ValueError, match="Redis client must be provided"):
+            RateLimiterFactory.create(
+                RateLimiterType.REDIS,
+                AlgorithmType.FIXED_WINDOW,
+                Rules(max_requests=1, time_window=60),
+            )
 
     def test_create_unsupported_rate_limiter(self):
         """Test creating an unsupported rate limiter type raises error"""
@@ -133,6 +147,6 @@ class TestRateLimiterOrchestrator:
     def test_orchestrator_initialization_with_redis(self):
         """Test orchestrator initialization with Redis rate limiter"""
         orchestrator = RateLimiterOrchestrator(
-            RateLimiterType.REDIS, AlgorithmType.FIXED_WINDOW, 10, 60
+            RateLimiterType.REDIS, AlgorithmType.FIXED_WINDOW, 10, 60, Redis()
         )
         assert isinstance(orchestrator, RateLimiterOrchestrator)

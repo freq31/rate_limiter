@@ -16,9 +16,9 @@ class RateLimiterOrchestrator:
         self,
         rate_limiter_type: RateLimiterType,
         algorithm_type: AlgorithmType,
-        max_requests: float,
-        time_window: float,
-        redis_client: Redis,
+        max_requests: int,
+        time_window: int,
+        redis_client: Redis | None = None,
     ):
         self.__rate_limiter_type = rate_limiter_type
         self.__algorithm_type = algorithm_type
@@ -38,11 +38,15 @@ class RateLimiterFactory:
         rate_limiter_type: RateLimiterType,
         algorithm_type: AlgorithmType,
         rules: Rules,
-        redis_client: Redis,
+        redis_client: Redis | None = None,
     ) -> RateLimiter:
         if rate_limiter_type == RateLimiterType.IN_MEMORY:
             return InMemoryRateLimiter(algorithm_type, rules)
         elif rate_limiter_type == RateLimiterType.REDIS:
+            if redis_client is None:
+                raise ValueError(
+                    "Redis client must be provided for Redis rate limiter."
+                )
             return RedisRateLimiter(algorithm_type, rules, redis_client)
         else:
             raise ValueError(
