@@ -1,5 +1,7 @@
 from abc import ABC, abstractmethod
 
+from redis.asyncio import Redis
+
 
 from src.rate_limiter.request import AlgorithmType, RateLimiterType, Rules
 from src.rate_limiter.response import Response
@@ -18,7 +20,10 @@ class Algorithm(ABC):
 class AlgorithmFactory:
     @staticmethod
     def create(
-        rate_limiter_type: RateLimiterType, algorithm_type: AlgorithmType, rules: Rules
+        rate_limiter_type: RateLimiterType,
+        algorithm_type: AlgorithmType,
+        rules: Rules,
+        redis_client: Redis | None = None,
     ) -> Algorithm:
         if rate_limiter_type == RateLimiterType.IN_MEMORY:
             if algorithm_type == AlgorithmType.FIXED_WINDOW:
@@ -36,17 +41,21 @@ class AlgorithmFactory:
             else:
                 raise ValueError(f"Unknown algorithm type: {algorithm_type.value}")
         elif rate_limiter_type == RateLimiterType.REDIS:
+            if redis_client is None:
+                raise ValueError(
+                    "Redis client must be provided for Redis rate limiter."
+                )
             if algorithm_type == AlgorithmType.FIXED_WINDOW:
                 from .fixed_window import FixedWindowInRedis
 
-                return FixedWindowInRedis(rules)
+                return FixedWindowInRedis(rules, redis_client)
             elif algorithm_type == AlgorithmType.SLIDING_WINDOW:
                 from .sliding_window import SlidingWindowInRedis
 
-                return SlidingWindowInRedis(rules)
+                return SlidingWindowInRedis(rules, redis_client)
             elif algorithm_type == AlgorithmType.TOKEN_BUCKET:
                 from .token_bucket import TokenBucketInRedis
 
-                return TokenBucketInRedis(rules)
+                return TokenBucketInRedis(rules, redis_client)
             else:
                 raise ValueError(f"Unknown algorithm type: {algorithm_type.value}")

@@ -1,5 +1,7 @@
 import asyncio
 import time
+
+from redis.asyncio import Redis
 from src.algorithms.memory import TokenBucketState
 from src.rate_limiter.request import Rules
 from src.rate_limiter.response import Response, get_response
@@ -76,10 +78,11 @@ class TokenBucketInMemory(TokenBucket):
 
 
 class TokenBucketInRedis(TokenBucket):
-    def __init__(self, rules: Rules):
+    def __init__(self, rules: Rules, redis_client: Redis):
         self.__rules = rules
         self.__client_tokens: dict[str, TokenBucketState] = {}
         self.__lock = asyncio.Lock()
+        self.__redis_client = redis_client
 
     async def execute(self, client_id: str) -> Response:
         # TODO(Phase 2): implement via atomic Redis Lua script (lazy refill + consume)

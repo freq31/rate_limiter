@@ -1,5 +1,7 @@
 import asyncio
 import time
+
+from redis.asyncio import Redis
 from src.algorithms.memory import FixedWindowState, SlidingWindowState
 from src.rate_limiter.request import Rules
 from src.rate_limiter.response import Response, get_response
@@ -124,10 +126,11 @@ class SlidingWindowInMemory(SlidingWindow):
 
 
 class SlidingWindowInRedis(SlidingWindow):
-    def __init__(self, rules: Rules):
+    def __init__(self, rules: Rules, redis_client: Redis):
         self.__rules = rules
         self.__request_count: dict[str, SlidingWindowState] = {}
         self.__lock = asyncio.Lock()
+        self.__redis_client = redis_client
 
     async def execute(self, client_id: str) -> Response:
         # TODO(Phase 2): implement via Redis sorted set (ZREMRANGEBYSCORE + ZADD + ZCARD)

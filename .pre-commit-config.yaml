@@ -10,6 +10,7 @@ repos:
     rev: v1.9.0
     hooks:
       - id: mypy          # type checking
+        additional_dependencies: ["redis", "pydantic"]
 
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v4.6.0

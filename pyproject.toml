@@ -15,7 +15,8 @@ authors = [
 ]
 
 dependencies = [
-  "pydantic"
+  "pydantic",
+  "redis"
 ]
 
 [project.optional-dependencies]
