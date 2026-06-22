@@ -1,35 +1,9 @@
 import asyncio
 
 import pytest
-from redis.asyncio import Redis
-from testcontainers.redis import RedisContainer
 
 from src.algorithms.fixed_window import FixedWindowInRedis
 from src.rate_limiter.request import Rules
-
-
-@pytest.fixture(scope="module")
-def redis_container():
-    """Spins up a real Redis in Docker for the duration of this test module.
-    Skips (rather than failing) when Docker isn't available locally - CI is
-    expected to have it."""
-    try:
-        with RedisContainer() as container:
-            yield container
-    except Exception as e:
-        pytest.skip(f"Docker is not available: {e}")
-
-
-@pytest.fixture
-async def redis_client(redis_container):
-    client = Redis(
-        host=redis_container.get_container_host_ip(),
-        port=int(redis_container.get_exposed_port(6379)),
-        decode_responses=True,
-    )
-    yield client
-    await client.flushall()
-    await client.aclose()
 
 
 class TestFixedWindowInRedis:
