@@ -31,6 +31,9 @@ class RateLimiterOrchestrator:
         client = Client(uId=uId)
         return await self.__rate_limiter.get_response(client)
 
+    def get_rules(self) -> Rules:
+        return self.__rules
+
 
 class RateLimiterFactory:
     @staticmethod
