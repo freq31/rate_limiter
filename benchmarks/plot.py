@@ -5,9 +5,10 @@ Usage::
 
     python -m benchmarks.plot benchmarks/results/bench_20260627_120000.csv
 
-Produces two PNGs next to the CSV:
+Produces three PNGs next to the CSV:
   - *_throughput.png  — throughput vs concurrency, one line per (backend, algo)
   - *_latency.png     — p50/p90/p99 grouped bars per (backend, algo) at highest concurrency
+  - *_memory.png      — memory footprint grouped bars per (backend, algo) at highest concurrency
 """
 
 from __future__ import annotations
@@ -42,6 +43,7 @@ class Row:
     p90_us: float
     p99_us: float
     p999_us: float
+    memory_bytes: int
 
 
 def load_csv(path: str) -> list[Row]:
@@ -58,6 +60,7 @@ def load_csv(path: str) -> list[Row]:
                     p90_us=float(r["p90_us"]),
                     p99_us=float(r["p99_us"]),
                     p999_us=float(r["p999_us"]),
+                    memory_bytes=int(float(r.get("memory_bytes", 0))),
                 )
             )
     return rows
@@ -75,6 +78,14 @@ def _fmt_us(v: float) -> str:
     if v >= 1_000:
         return f"{v / 1_000:.1f}ms"
     return f"{v:.0f}µs"
+
+
+def _fmt_bytes(b: int) -> str:
+    if b >= 1_048_576:
+        return f"{b / 1_048_576:.1f} MB"
+    if b >= 1_024:
+        return f"{b / 1_024:.1f} KB"
+    return f"{b} B"
 
 
 def plot_throughput(rows: list[Row], out_path: str) -> None:
@@ -168,6 +179,60 @@ def plot_latency(rows: list[Row], out_path: str) -> None:
     print(f"  Latency chart  → {out_path}")
 
 
+def plot_memory(rows: list[Row], out_path: str) -> None:
+    max_conc = max(r.concurrency for r in rows)
+    peak_rows = [r for r in rows if r.concurrency == max_conc]
+
+    if not peak_rows or all(r.memory_bytes == 0 for r in peak_rows):
+        print("  No memory data at peak concurrency — skipping memory chart.")
+        return
+
+    labels = [f"{r.backend}\n{r.algorithm}" for r in peak_rows]
+    mem_kb = [r.memory_bytes / 1_024 for r in peak_rows]
+
+    x = np.arange(len(labels))
+    width = 0.5
+
+    fig, ax = plt.subplots(figsize=(12, 7))
+    colors = ["#4c72b0" if r.backend == "in_memory" else "#dd8452" for r in peak_rows]
+    bars = ax.bar(x, mem_kb, width, color=colors, zorder=3)
+
+    for bar, row in zip(bars, peak_rows):
+        height = bar.get_height()
+        ax.annotate(
+            _fmt_bytes(row.memory_bytes),
+            (bar.get_x() + bar.get_width() / 2, height),
+            textcoords="offset points",
+            xytext=(0, 5),
+            ha="center",
+            fontsize=8,
+            fontweight="bold",
+        )
+
+    from matplotlib.patches import Patch
+
+    legend_elements = [
+        Patch(facecolor="#4c72b0", label="in_memory (tracemalloc peak)"),
+        Patch(facecolor="#dd8452", label="redis (MEMORY USAGE sum)"),
+    ]
+    ax.legend(handles=legend_elements, fontsize=9)
+
+    ax.set_xlabel("Backend / Algorithm", fontsize=11)
+    ax.set_ylabel("Memory (KB)", fontsize=11)
+    ax.set_title(
+        f"Memory Footprint @ Concurrency={max_conc}",
+        fontsize=13,
+        fontweight="bold",
+    )
+    ax.set_xticks(x)
+    ax.set_xticklabels(labels, fontsize=8)
+    ax.grid(True, alpha=0.3, axis="y", zorder=0)
+    fig.tight_layout()
+    fig.savefig(out_path, dpi=150)
+    plt.close(fig)
+    print(f"  Memory chart   → {out_path}")
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description="Plot benchmark results")
     parser.add_argument("csv_path", help="Path to the benchmark CSV file")
@@ -178,6 +243,7 @@ def main() -> None:
 
     plot_throughput(rows, f"{base}_throughput.png")
     plot_latency(rows, f"{base}_latency.png")
+    plot_memory(rows, f"{base}_memory.png")
 
 
 if __name__ == "__main__":

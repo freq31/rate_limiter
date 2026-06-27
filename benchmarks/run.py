@@ -54,7 +54,22 @@ CSV_COLUMNS = [
     "min_us",
     "max_us",
     "errors",
+    "memory_bytes",
 ]
+
+KEY_PREFIXES = {
+    "fixed_window": "rl:fixed_window:",
+    "sliding_window": "rl:sliding_window:",
+    "token_bucket": "rl:token_bucket:",
+}
+
+
+def _fmt_bytes(b: int) -> str:
+    if b >= 1_048_576:
+        return f"{b / 1_048_576:.1f} MB"
+    if b >= 1_024:
+        return f"{b / 1_024:.1f} KB"
+    return f"{b} B"
 
 
 def parse_int_list(s: str) -> list[int]:
@@ -148,6 +163,8 @@ async def bench_one(
         backend=backend_name,
         algorithm=algo_name,
         num_clients=num_clients,
+        redis_client=redis_client,
+        key_prefix=KEY_PREFIXES.get(algo_name, ""),
     )
 
 
@@ -217,10 +234,12 @@ async def main(argv: list[str] | None = None) -> None:
                 )
                 results.append(result)
 
+                mem = _fmt_bytes(result.memory_bytes)
                 print(
                     f"  {result.throughput_ops:>10,.0f} ops/s"
                     f"  p50={result.p50_us:>8,.1f}µs"
                     f"  p99={result.p99_us:>8,.1f}µs"
+                    f"  mem={mem:>8s}"
                     f"  err={result.errors}"
                 )
 
@@ -244,11 +263,14 @@ async def main(argv: list[str] | None = None) -> None:
     print(f"\nResults written to {out_path}")
 
     # Print summary table
-    print(f"\n{'='*70}")
+    print(f"\n{'='*80}")
     print(
-        f"  {'Backend':<12} {'Algorithm':<17} {'Conc':>5} {'Ops/s':>12} {'p50(µs)':>10} {'p99(µs)':>10} {'p99.9(µs)':>10}"
+        f"  {'Backend':<12} {'Algorithm':<17} {'Conc':>5} {'Ops/s':>12}"
+        f" {'p50(µs)':>10} {'p99(µs)':>10} {'p99.9(µs)':>10} {'Memory':>10}"
     )
-    print(f"  {'-'*12} {'-'*17} {'-'*5} {'-'*12} {'-'*10} {'-'*10} {'-'*10}")
+    print(
+        f"  {'-'*12} {'-'*17} {'-'*5} {'-'*12}" f" {'-'*10} {'-'*10} {'-'*10} {'-'*10}"
+    )
     for r in results:
         print(
             f"  {r.backend:<12} {r.algorithm:<17} {r.concurrency:>5}"
@@ -256,8 +278,9 @@ async def main(argv: list[str] | None = None) -> None:
             f" {r.p50_us:>10,.1f}"
             f" {r.p99_us:>10,.1f}"
             f" {r.p999_us:>10,.1f}"
+            f" {_fmt_bytes(r.memory_bytes):>10s}"
         )
-    print(f"{'='*70}\n")
+    print(f"{'='*80}\n")
 
 
 if __name__ == "__main__":

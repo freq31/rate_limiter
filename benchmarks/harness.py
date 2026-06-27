@@ -2,6 +2,8 @@
 
 Fires N operations at a given concurrency level, records every latency
 sample via time.perf_counter, and computes percentiles + throughput.
+Also measures memory footprint via tracemalloc (in-memory) or
+Redis MEMORY USAGE (Redis backend).
 """
 
 from __future__ import annotations
@@ -11,6 +13,7 @@ import platform
 import statistics
 import sys
 import time
+import tracemalloc
 from dataclasses import dataclass, field
 
 
@@ -31,6 +34,7 @@ class BenchmarkResult:
     min_us: float = 0.0
     max_us: float = 0.0
     errors: int = 0
+    memory_bytes: int = 0
 
     @staticmethod
     def from_samples(
@@ -43,6 +47,7 @@ class BenchmarkResult:
         wall_time_s: float,
         samples_us: list[float],
         errors: int,
+        memory_bytes: int = 0,
     ) -> BenchmarkResult:
         sorted_s = sorted(samples_us)
         q = statistics.quantiles(sorted_s, n=1000) if len(sorted_s) >= 2 else sorted_s
@@ -64,7 +69,45 @@ class BenchmarkResult:
             min_us=sorted_s[0] if sorted_s else 0,
             max_us=sorted_s[-1] if sorted_s else 0,
             errors=errors,
+            memory_bytes=memory_bytes,
         )
+
+
+def measure_tracemalloc() -> tuple:
+    """Start tracemalloc and return a snapshot-taker.
+
+    Returns (start, stop) callables.  Call start() before the workload,
+    stop() after — stop() returns peak memory in bytes allocated by
+    Python during the interval.
+    """
+
+    def start() -> None:
+        tracemalloc.stop() if tracemalloc.is_tracing() else None
+        tracemalloc.start()
+
+    def stop() -> int:
+        _, peak = tracemalloc.get_traced_memory()
+        tracemalloc.stop()
+        return peak
+
+    return start, stop
+
+
+async def measure_redis_memory(redis_client, key_prefix: str) -> int:
+    """Sum MEMORY USAGE across all keys matching *key_prefix**.
+
+    Returns total bytes consumed by the rate-limiter keys in Redis.
+    Falls back to 0 on error.
+    """
+    total = 0
+    try:
+        async for key in redis_client.scan_iter(match=f"{key_prefix}*"):
+            usage = await redis_client.memory_usage(key)
+            if usage:
+                total += usage
+    except Exception:
+        pass
+    return total
 
 
 def environment_info() -> dict[str, str]:
@@ -84,12 +127,19 @@ async def run_benchmark(
     backend: str = "",
     algorithm: str = "",
     num_clients: int = 1,
+    redis_client=None,
+    key_prefix: str = "",
 ) -> BenchmarkResult:
     """Run *total_ops* invocations of *coro_factory(i)* at the given concurrency.
 
     *coro_factory(i)* receives the operation index and must return an
     awaitable that performs the work to be measured.  For the rate limiter
     this is ``orchestrator.get_response(uId=client_id)``.
+
+    Memory measurement:
+      - in-memory backend: tracemalloc peak during the timed run.
+      - redis backend: sum of ``MEMORY USAGE`` across all limiter keys
+        after the run completes.
     """
     sem = asyncio.Semaphore(concurrency)
     samples: list[float] = []
@@ -113,11 +163,24 @@ async def run_benchmark(
         samples.clear()
         errors = 0
 
+    # --- memory tracking (in-memory backend) ---
+    mem_start, mem_stop = measure_tracemalloc()
+    is_in_memory = backend == "in_memory"
+    if is_in_memory:
+        mem_start()
+
     # --- timed run ---
     wall_t0 = time.perf_counter()
     tasks = [asyncio.create_task(_worker(i)) for i in range(total_ops)]
     await asyncio.gather(*tasks)
     wall_time = time.perf_counter() - wall_t0
+
+    # --- collect memory ---
+    memory_bytes = 0
+    if is_in_memory:
+        memory_bytes = mem_stop()
+    elif redis_client and key_prefix:
+        memory_bytes = await measure_redis_memory(redis_client, key_prefix)
 
     return BenchmarkResult.from_samples(
         backend=backend,
@@ -128,4 +191,5 @@ async def run_benchmark(
         wall_time_s=wall_time,
         samples_us=samples,
         errors=errors,
+        memory_bytes=memory_bytes,
     )
