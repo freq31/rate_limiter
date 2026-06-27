@@ -1,0 +1,59 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "rate-limiter-py"
+version = "0.1.0"
+description = "Async-native rate limiting for Python — token bucket, fixed window, and sliding window algorithms with in-memory and Redis backends"
+readme = "README.md"
+requires-python = ">=3.14"
+license = { text = "MIT" }
+keywords = ["rate-limiter", "rate-limiting", "redis", "asyncio", "fastapi", "middleware", "token-bucket"]
+classifiers = [
+  "Development Status :: 4 - Beta",
+  "Intended Audience :: Developers",
+  "License :: OSI Approved :: MIT License",
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3.14",
+  "Framework :: AsyncIO",
+  "Framework :: FastAPI",
+  "Topic :: Internet :: WWW/HTTP",
+  "Topic :: Software Development :: Libraries :: Python Modules",
+  "Typing :: Typed",
+]
+
+authors = [
+  { name = "Aditya Raj", email = "aditya2331vvrs@gmail.com" }
+]
+
+dependencies = [
+  "pydantic",
+  "redis"
+]
+
+[project.optional-dependencies]
+dev = [
+  "ruff",
+  "mypy",
+  "black",
+  "pre-commit",
+  "pytest",
+  "pytest-asyncio",
+  "testcontainers[redis]"
+]
+fastapi = ["fastapi", "starlette"]
+
+[project.urls]
+Homepage = "https://github.com/freq31/rate_limiter"
+Repository = "https://github.com/freq31/rate_limiter"
+
+[tool.hatch.build.targets.wheel]
+packages = ["rate_limiter"]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]

@@ -1,0 +1,21 @@
+repos:
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.4.1
+    hooks:
+      - id: ruff          # linting
+        args: ["--fix"]
+      - id: ruff-format   # formatting
+
+  - repo: https://github.com/pre-commit/mirrors-mypy
+    rev: v1.9.0
+    hooks:
+      - id: mypy          # type checking
+        additional_dependencies: ["redis", "pydantic"]
+
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.6.0
+    hooks:
+      - id: trailing-whitespace   # removes trailing spaces
+      - id: end-of-file-fixer     # ensures newline at EOF
+      - id: check-merge-conflict  # blocks accidental conflict markers
+      - id: debug-statements      # catches leftover breakpoint() / pdb
