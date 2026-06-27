@@ -9,7 +9,6 @@ import pytest
 from src.main import RateLimiterOrchestrator
 from src.rate_limiter.request import AlgorithmType, RateLimiterType
 
-
 # --- rule validation ------------------------------------------------------
 
 
