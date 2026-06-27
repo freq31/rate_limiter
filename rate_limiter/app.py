@@ -2,10 +2,10 @@ import logging
 from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from redis.asyncio import Redis
-from src.main import RateLimiterOrchestrator
-from src.rate_limiter.request import AlgorithmType, RateLimiterType
-from src.settings import get_settings
-from src.rate_limiter.middleware import RateLimiterMiddleware
+from rate_limiter.main import RateLimiterOrchestrator
+from rate_limiter.backend.request import AlgorithmType, RateLimiterType
+from rate_limiter.settings import get_settings
+from rate_limiter.backend.middleware import RateLimiterMiddleware
 
 # Logging is configured here, at the application layer. The library only ever
 # calls logging.getLogger(__name__); it must not configure the root logger.

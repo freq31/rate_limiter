@@ -1,7 +1,7 @@
-from src.algorithms.base import AlgorithmFactory
-from src.rate_limiter.response import Response
+from rate_limiter.algorithms.base import AlgorithmFactory
+from rate_limiter.backend.response import Response
 from .base import RateLimiter
-from src.rate_limiter.request import (
+from rate_limiter.backend.request import (
     AlgorithmType,
     RateLimiterType,
     Client,

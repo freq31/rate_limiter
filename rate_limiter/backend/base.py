@@ -1,8 +1,8 @@
 from abc import ABC, abstractmethod
 
 
-from src.rate_limiter.request import Client
-from src.rate_limiter.response import Response
+from rate_limiter.backend.request import Client
+from rate_limiter.backend.response import Response
 
 
 class RateLimiter(ABC):

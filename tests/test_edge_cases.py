@@ -6,8 +6,8 @@ the Redis backend errors (the algorithms fail closed -> request denied).
 
 import pytest
 
-from src.main import RateLimiterOrchestrator
-from src.rate_limiter.request import AlgorithmType, RateLimiterType
+from rate_limiter.main import RateLimiterOrchestrator
+from rate_limiter.backend.request import AlgorithmType, RateLimiterType
 
 # --- rule validation ------------------------------------------------------
 

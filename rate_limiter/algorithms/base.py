@@ -3,8 +3,8 @@ from abc import ABC, abstractmethod
 from redis.asyncio import Redis
 
 
-from src.rate_limiter.request import AlgorithmType, RateLimiterType, Rules
-from src.rate_limiter.response import Response
+from rate_limiter.backend.request import AlgorithmType, RateLimiterType, Rules
+from rate_limiter.backend.response import Response
 
 
 class Algorithm(ABC):

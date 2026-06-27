@@ -1,13 +1,13 @@
-from src.rate_limiter.redis import RedisRateLimiter
-from src.rate_limiter.memory import InMemoryRateLimiter
-from src.rate_limiter.base import RateLimiter
-from src.rate_limiter.request import (
+from rate_limiter.backend.redis import RedisRateLimiter
+from rate_limiter.backend.memory import InMemoryRateLimiter
+from rate_limiter.backend.base import RateLimiter
+from rate_limiter.backend.request import (
     AlgorithmType,
     Client,
     Rules,
     RateLimiterType,
 )
-from src.rate_limiter.response import Response
+from rate_limiter.backend.response import Response
 from redis.asyncio import Redis
 import logging
 

@@ -2,8 +2,8 @@ import asyncio
 
 import pytest
 
-from src.algorithms.fixed_window import FixedWindowInRedis
-from src.rate_limiter.request import Rules
+from rate_limiter.algorithms.fixed_window import FixedWindowInRedis
+from rate_limiter.backend.request import Rules
 
 
 class TestFixedWindowInRedis:

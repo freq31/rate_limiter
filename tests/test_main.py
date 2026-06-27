@@ -3,14 +3,14 @@ from unittest.mock import MagicMock
 
 from redis.asyncio import Redis
 
-from src.main import RateLimiterOrchestrator, RateLimiterFactory
-from src.rate_limiter.request import (
+from rate_limiter.main import RateLimiterOrchestrator, RateLimiterFactory
+from rate_limiter.backend.request import (
     AlgorithmType,
     RateLimiterType,
     Rules,
 )
-from src.rate_limiter.response import Response
-from src.rate_limiter.base import RateLimiter
+from rate_limiter.backend.response import Response
+from rate_limiter.backend.base import RateLimiter
 
 
 class TestRateLimiterFactory:

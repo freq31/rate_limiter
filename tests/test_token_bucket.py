@@ -1,7 +1,7 @@
 import pytest
 
-from src.algorithms.token_bucket import TokenBucketInMemory
-from src.rate_limiter.request import Rules
+from rate_limiter.algorithms.token_bucket import TokenBucketInMemory
+from rate_limiter.backend.request import Rules
 
 
 class TestTokenBucketInMemory:

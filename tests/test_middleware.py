@@ -8,10 +8,10 @@ req1 -> 200 (remaining 1), req2 -> 200 (remaining 0), req3 -> 429.
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
-from src.main import RateLimiterOrchestrator
-from src.rate_limiter.request import AlgorithmType, RateLimiterType
-from src.rate_limiter.response import Response
-from src.rate_limiter.middleware import RateLimiterMiddleware
+from rate_limiter.main import RateLimiterOrchestrator
+from rate_limiter.backend.request import AlgorithmType, RateLimiterType
+from rate_limiter.backend.response import Response
+from rate_limiter.backend.middleware import RateLimiterMiddleware
 
 
 def _build_app(limiter, **mw_kwargs) -> FastAPI:

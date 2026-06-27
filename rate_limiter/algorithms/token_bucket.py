@@ -4,10 +4,10 @@ import math
 import time
 
 from redis.asyncio import Redis
-from src.algorithms.memory import TokenBucketState
-from src.rate_limiter.request import Rules
-from src.rate_limiter.response import Response, get_response
-from src.scripts.token_bucket import _TOKEN_BUCKET_LUA
+from rate_limiter.algorithms.memory import TokenBucketState
+from rate_limiter.backend.request import Rules
+from rate_limiter.backend.response import Response, get_response
+from rate_limiter.scripts.token_bucket import _TOKEN_BUCKET_LUA
 from .base import Algorithm
 
 

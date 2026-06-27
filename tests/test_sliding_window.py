@@ -1,7 +1,7 @@
 import pytest
 
-from src.algorithms.sliding_window import SlidingWindowInMemory
-from src.rate_limiter.request import Rules
+from rate_limiter.algorithms.sliding_window import SlidingWindowInMemory
+from rate_limiter.backend.request import Rules
 
 
 class TestSlidingWindowInMemory:

@@ -12,9 +12,9 @@ when no Redis is available (see conftest).
 import httpx
 from fastapi import FastAPI
 
-from src.main import RateLimiterOrchestrator
-from src.rate_limiter.request import AlgorithmType, RateLimiterType
-from src.rate_limiter.middleware import RateLimiterMiddleware
+from rate_limiter.main import RateLimiterOrchestrator
+from rate_limiter.backend.request import AlgorithmType, RateLimiterType
+from rate_limiter.backend.middleware import RateLimiterMiddleware
 
 
 def _build_app(redis_client) -> FastAPI:

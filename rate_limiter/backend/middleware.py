@@ -4,7 +4,7 @@ from typing import List, Optional, Callable
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.responses import JSONResponse
 from starlette.requests import Request
-from src.main import RateLimiterOrchestrator
+from rate_limiter.main import RateLimiterOrchestrator
 
 
 class RateLimiterMiddleware(BaseHTTPMiddleware):

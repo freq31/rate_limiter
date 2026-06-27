@@ -1,7 +1,7 @@
 import pytest
 
-from src.algorithms.fixed_window import FixedWindowInMemory
-from src.rate_limiter.request import Rules
+from rate_limiter.algorithms.fixed_window import FixedWindowInMemory
+from rate_limiter.backend.request import Rules
 
 
 class TestFixedWindowInMemory:

@@ -26,8 +26,8 @@ from datetime import datetime, timezone
 from redis.asyncio import Redis
 
 from benchmarks.harness import BenchmarkResult, environment_info, run_benchmark
-from src.main import RateLimiterOrchestrator
-from src.rate_limiter.request import AlgorithmType, RateLimiterType
+from rate_limiter.main import RateLimiterOrchestrator
+from rate_limiter.backend.request import AlgorithmType, RateLimiterType
 
 ALGORITHMS = {
     "fixed_window": AlgorithmType.FIXED_WINDOW,

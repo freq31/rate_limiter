@@ -4,10 +4,10 @@ import time
 import uuid
 
 from redis.asyncio import Redis
-from src.algorithms.memory import FixedWindowState, SlidingWindowState
-from src.rate_limiter.request import Rules
-from src.rate_limiter.response import Response, get_response
-from src.scripts.sliding_window import _SLIDING_WINDOW_LUA
+from rate_limiter.algorithms.memory import FixedWindowState, SlidingWindowState
+from rate_limiter.backend.request import Rules
+from rate_limiter.backend.response import Response, get_response
+from rate_limiter.scripts.sliding_window import _SLIDING_WINDOW_LUA
 from .base import Algorithm
 
 

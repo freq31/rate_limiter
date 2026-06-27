@@ -2,8 +2,8 @@ import asyncio
 
 import pytest
 
-from src.algorithms.sliding_window import SlidingWindowInRedis
-from src.rate_limiter.request import Rules
+from rate_limiter.algorithms.sliding_window import SlidingWindowInRedis
+from rate_limiter.backend.request import Rules
 
 
 class TestSlidingWindowInRedis:
