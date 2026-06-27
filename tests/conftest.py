@@ -1,8 +1,8 @@
+import os
 import time
 
 import pytest
 from redis.asyncio import Redis
-from src.settings import get_settings
 
 
 @pytest.fixture
@@ -27,10 +27,9 @@ def redis_endpoint():
          with a Docker daemon).
     If neither is available, the dependent tests skip rather than fail.
     """
-    settings = get_settings()
-    host = settings.redis_host
+    host = os.getenv("REDIS_HOST")
     if host:
-        yield (host, settings.redis_port)
+        yield (host, int(os.getenv("REDIS_PORT", "6379")))
         return
 
     try:

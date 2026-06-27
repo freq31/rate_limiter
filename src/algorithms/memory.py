@@ -2,7 +2,7 @@ from typing import TypedDict
 
 
 class TokenBucketState(TypedDict):
-    tokens: float
+    tokens: int
     last_refill_timestamp: float
 
 

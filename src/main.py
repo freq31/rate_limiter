@@ -9,6 +9,7 @@ from src.rate_limiter.request import (
 )
 from src.rate_limiter.response import Response
 from redis.asyncio import Redis
+import logging
 
 
 class RateLimiterOrchestrator:
@@ -20,12 +21,20 @@ class RateLimiterOrchestrator:
         time_window: int,
         redis_client: Redis | None = None,
     ):
+        self.__validate_rules(time_window, max_requests)
+        self.logger = logging.getLogger(__name__)
         self.__rate_limiter_type = rate_limiter_type
         self.__algorithm_type = algorithm_type
         self.__rules = Rules(max_requests=max_requests, time_window=time_window)
         self.__rate_limiter = RateLimiterFactory.create(
             rate_limiter_type, algorithm_type, self.__rules, redis_client
         )
+
+    def __validate_rules(self, time_window: int, max_requests: int):
+        if time_window <= 0:
+            raise ValueError("Time window must be a positive integer.")
+        if max_requests <= 0:
+            raise ValueError("Max requests must be a positive integer.")
 
     async def get_response(self, uId: str) -> Response:
         client = Client(uId=uId)

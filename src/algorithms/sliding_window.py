@@ -1,4 +1,5 @@
 import asyncio
+import logging
 import time
 import uuid
 
@@ -19,6 +20,7 @@ class SlidingWindowInMemory(SlidingWindow):
         self.__rules = rules
         self.__request_count: dict[str, SlidingWindowState] = {}
         self.__lock = asyncio.Lock()
+        self.logger = logging.getLogger(__name__)
 
     def _generate_new_window_state(
         self, request_count: int, window_start_timestamp: float
@@ -38,10 +40,16 @@ class SlidingWindowInMemory(SlidingWindow):
         """Execute the sliding window algorithm logic."""
         try:
             async with self.__lock:
+                self.logger.info(
+                    f"Start -> Executing Sliding Window In Memory Rate Limiter for client {client_id}"
+                )
                 current_time = time.time()
 
                 # Initialize or check if window has expired
                 if client_id not in self.__request_count:
+                    self.logger.info(
+                        f"Client {client_id} not found. Initializing new state"
+                    )
                     self.__request_count[client_id] = self._generate_new_state(
                         current_window=self._generate_new_window_state(
                             request_count=0, window_start_timestamp=current_time
@@ -61,6 +69,9 @@ class SlidingWindowInMemory(SlidingWindow):
                     )
                     # Reset window if it has expired
                     if time_elapsed > self.__rules.time_window:
+                        self.logger.info(
+                            f"Window expired for client {client_id}. Resetting state"
+                        )
                         self.__request_count[client_id] = self._generate_new_state(
                             current_window=self._generate_new_window_state(
                                 request_count=0, window_start_timestamp=current_time
@@ -78,34 +89,38 @@ class SlidingWindowInMemory(SlidingWindow):
                 # Calculate weight of requests from the previous window that still count
                 # Weight represents the fraction of the time window still overlapping with the previous window
                 previous_window_weight = max(
-                    0,
-                    (self.__rules.time_window - time_elapsed)
-                    / self.__rules.time_window,
+                    0.0,
+                    (float(self.__rules.time_window) - time_elapsed)
+                    / float(self.__rules.time_window),
                 )
 
                 # Calculate total requests considering both current and weighted previous window
                 total_requests = (
-                    current_window["request_count"]
-                    + previous_window["request_count"] * previous_window_weight
+                    float(current_window["request_count"])
+                    + float(previous_window["request_count"]) * previous_window_weight
                 )
 
                 # Check if request is allowed
-                if total_requests < self.__rules.max_requests:
+                if total_requests < float(self.__rules.max_requests):
                     # Increment the current window count
                     self.__request_count[client_id]["current_window"][
                         "request_count"
                     ] += 1
                     # Calculate remaining requests after accepting this one
                     remaining_requests = max(
-                        0, int(self.__rules.max_requests - total_requests - 1)
+                        0, int(float(self.__rules.max_requests) - total_requests - 1)
                     )
+                    self.logger.info(f" End -> Request allowed for client {client_id}")
                     return get_response(
                         allowed=True,
                         remaining_requests=remaining_requests,
                         reset_time=0,
                     )
-                time_until_reset = (total_requests - self.__rules.max_requests) * (
-                    self.__rules.time_window / self.__rules.max_requests
+                time_until_reset = (
+                    total_requests - float(self.__rules.max_requests)
+                ) * (float(self.__rules.time_window) / float(self.__rules.max_requests))
+                self.logger.info(
+                    f"End -> Request denied for client {client_id}. Max requests reached."
                 )
                 return get_response(
                     allowed=False,
@@ -113,7 +128,9 @@ class SlidingWindowInMemory(SlidingWindow):
                     reset_time=time_until_reset,
                 )
         except Exception as e:
-            print(f"Error executing sliding window for client {client_id}: {e}")
+            self.logger.error(
+                f"Error -> executing sliding window for client {client_id}, error: {e}"
+            )
             return get_response(allowed=False, remaining_requests=0, reset_time=0)
 
     async def reset(self, client_id: str) -> bool:
@@ -123,7 +140,7 @@ class SlidingWindowInMemory(SlidingWindow):
                 self.__request_count.pop(client_id, None)
                 return True
         except Exception as e:
-            print(f"Error resetting client {client_id}: {e}")
+            self.logger.error(f"Error -> resetting client {client_id}, error: {e}")
             return False
 
 
@@ -132,12 +149,16 @@ class SlidingWindowInRedis(SlidingWindow):
         self.__rules = rules
         self.__redis = redis_client
         self.__script = self.__redis.register_script(_SLIDING_WINDOW_LUA)
+        self.logger = logging.getLogger(__name__)
 
     def _key(self, client_id: str) -> str:
         return f"rl:sliding_window:{client_id}"
 
     async def execute(self, client_id: str) -> Response:
         try:
+            self.logger.info(
+                f"Start -> Executing Sliding Window Redis Rate Limiter for client {client_id}"
+            )
             current_time = time.time()
 
             allowed, current, oldest_timestamp = await self.__script(
@@ -152,13 +173,17 @@ class SlidingWindowInRedis(SlidingWindow):
             )
 
             if allowed == 1:
-                remaining_requests = max(0, int(self.__rules.max_requests - current))
+                self.logger.info(f"End -> Request allowed for client {client_id}")
+                remaining_requests = max(0, self.__rules.max_requests - int(current))
                 return get_response(
                     allowed=True,
                     remaining_requests=remaining_requests,
                     reset_time=0,
                 )
             else:
+                self.logger.info(
+                    f"End -> Request denied for client {client_id}. Max requests reached."
+                )
                 time_diff = current_time - float(oldest_timestamp)
                 reset_time = self.__rules.time_window - time_diff
                 return get_response(
@@ -168,14 +193,17 @@ class SlidingWindowInRedis(SlidingWindow):
                 )
 
         except Exception as e:
-            print(f"Error executing sliding window for client {client_id}: {e}")
+            self.logger.error(
+                f"Error -> executing sliding window for client {client_id}, error: {e}"
+            )
             return get_response(allowed=False, remaining_requests=0, reset_time=0)
 
     async def reset(self, client_id: str) -> bool:
         """Reset the request count for the given user."""
         try:
+            self.logger.info(f"Resetting request count for client {client_id}")
             await self.__redis.delete(self._key(client_id))
             return True
         except Exception as e:
-            print(f"Error resetting client {client_id}: {e}")
+            self.logger.error(f"Error -> resetting client {client_id}, error: {e}")
             return False

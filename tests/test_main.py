@@ -119,14 +119,12 @@ class TestRateLimiterOrchestrator:
             resp = await orch.get_response(uId=user_id)
             assert isinstance(resp, Response)
 
-    @pytest.mark.asyncio
-    async def test_is_request_allowed_with_zero_max_requests(self, orchestrator):
-        """Test is_request_allowed with zero max requests"""
-        orch = RateLimiterOrchestrator(
-            RateLimiterType.IN_MEMORY, AlgorithmType.FIXED_WINDOW, 0, 60
-        )
-        resp = await orch.get_response(uId="user123")
-        assert isinstance(resp, Response)
+    def test_zero_max_requests_is_rejected(self):
+        """A limiter that allows zero requests is invalid config -> ValueError."""
+        with pytest.raises(ValueError, match="Max requests must be a positive integer"):
+            RateLimiterOrchestrator(
+                RateLimiterType.IN_MEMORY, AlgorithmType.FIXED_WINDOW, 0, 60
+            )
 
     @pytest.mark.asyncio
     async def test_is_request_allowed_with_high_max_requests(self, orchestrator):
