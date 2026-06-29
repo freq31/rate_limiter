@@ -29,7 +29,7 @@ A pluggable, async-native rate-limiting library for Python. Supports **token buc
 ### Installation
 
 ```bash
-pip install async-rate-limiter
+pip install async-ratelimit
 ```
 
 ### In-memory rate limiting
