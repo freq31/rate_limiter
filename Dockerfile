@@ -3,8 +3,8 @@ FROM python:3.14-slim
 WORKDIR /app
 
 # Install dependencies first so this layer is cached across source changes.
-COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
+COPY requirements-test.txt .
+RUN pip install --no-cache-dir -r requirements-test.txt
 
 # Copy the project. `src` is importable as a top-level package because the
 # tests run from /app (on sys.path via `python -m`).

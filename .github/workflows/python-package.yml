@@ -5,7 +5,7 @@ name: CI
 
 on:
   push:
-    branches: ["main", "feature-*", "release"]
+    branches: ["main", "feature-*", "release", "fix-*"]
   pull_request:
     branches: ["main"]
 
@@ -50,10 +50,10 @@ jobs:
         run: ruff check .
 
       - name: Format check with black
-        run: black --check src tests
+        run: black --check rate_limiter tests
 
       - name: Type-check with mypy
-        run: mypy src
+        run: mypy rate_limiter
 
       - name: Test with pytest
         run: pytest -v
