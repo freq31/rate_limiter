@@ -1,7 +1,7 @@
 # rate-limiter
 
 [![CI](https://github.com/freq31/rate_limiter/actions/workflows/python-package.yml/badge.svg)](https://github.com/freq31/rate_limiter/actions/workflows/python-package.yml)
-[![Python 3.14+](https://img.shields.io/badge/python-3.14%2B-blue.svg)](https://www.python.org/downloads/)
+[![Python 3.11+](https://img.shields.io/badge/python-3.14%2B-blue.svg)](https://www.python.org/downloads/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 
 A pluggable, async-native rate-limiting library for Python. Supports **token bucket**, **fixed window**, and **sliding window log** algorithms across **in-memory** and **Redis** backends, with a drop-in ASGI middleware for FastAPI/Starlette.
