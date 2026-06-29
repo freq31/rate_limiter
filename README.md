@@ -29,15 +29,14 @@ A pluggable, async-native rate-limiting library for Python. Supports **token buc
 ### Installation
 
 ```bash
-pip install pydantic redis
+pip install python-rate-limiter
 ```
 
 ### In-memory rate limiting
 
 ```python
 import asyncio
-from src.main import RateLimiterOrchestrator
-from src.rate_limiter.request import AlgorithmType, RateLimiterType
+from rate_limiter import RateLimiterOrchestrator, AlgorithmType, RateLimiterType
 
 limiter = RateLimiterOrchestrator(
     rate_limiter_type=RateLimiterType.IN_MEMORY,
@@ -82,9 +81,7 @@ await redis_client.aclose()
 ```python
 from fastapi import FastAPI
 from redis.asyncio import Redis
-from src.main import RateLimiterOrchestrator
-from src.rate_limiter.request import AlgorithmType, RateLimiterType
-from src.rate_limiter.middleware import RateLimiterMiddleware
+from rate_limiter import RateLimiterOrchestrator, RateLimiterMiddleware, AlgorithmType, RateLimiterType
 
 app = FastAPI()
 
@@ -243,8 +240,8 @@ pip install -r requirements.txt
 
 # Lint and type-check
 ruff check .
-black --check src tests
-mypy src
+black --check rate_limiter tests
+mypy rate_limiter
 
 # Run benchmarks
 python -m benchmarks.run --ops 50000 --concurrency 1,10,50,100,250
@@ -256,7 +253,8 @@ python -m benchmarks.plot benchmarks/results/<csv_file>.csv
 ## Project structure
 
 ```
-src/
+rate_limiter/
+├── __init__.py                 # Public API re-exports
 ├── main.py                     # RateLimiterOrchestrator (public API) + Factory
 ├── app.py                      # FastAPI demo application
 ├── settings.py                 # Pydantic settings for the demo app
@@ -265,11 +263,11 @@ src/
 │   ├── fixed_window.py         # FixedWindowInMemory, FixedWindowInRedis
 │   ├── sliding_window.py       # SlidingWindowInMemory, SlidingWindowInRedis
 │   └── token_bucket.py         # TokenBucketInMemory, TokenBucketInRedis
-├── rate_limiter/
+├── backend/
 │   ├── base.py                 # RateLimiter ABC
 │   ├── memory.py               # InMemoryRateLimiter
 │   ├── redis.py                # RedisRateLimiter (BYO client)
-│   ├── middleware.py            # RateLimiterMiddleware (ASGI)
+│   ├── middleware.py           # RateLimiterMiddleware (ASGI)
 │   ├── request.py              # Rules, Client, AlgorithmType, RateLimiterType
 │   └── response.py             # Response model
 └── scripts/
