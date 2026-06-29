@@ -3,7 +3,7 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [project]
-name = "rate-limiter-py"
+name = "python-rate-limiter"
 version = "0.1.0"
 description = "Async-native rate limiting for Python — token bucket, fixed window, and sliding window algorithms with in-memory and Redis backends"
 readme = "README.md"
