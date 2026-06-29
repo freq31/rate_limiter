@@ -1,6 +1,6 @@
 # rate-limiter
 
-[![CI](https://github.com/freq31/rate_limiter/actions/workflows/python-package.yml/badge.svg?branch=feature-initial)](https://github.com/freq31/rate_limiter/actions/workflows/python-package.yml)
+[![CI](https://github.com/freq31/rate_limiter/actions/workflows/python-package.yml/badge.svg)](https://github.com/freq31/rate_limiter/actions/workflows/python-package.yml)
 [![Python 3.14+](https://img.shields.io/badge/python-3.14%2B-blue.svg)](https://www.python.org/downloads/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 
