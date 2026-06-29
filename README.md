@@ -9,7 +9,7 @@ A pluggable, async-native rate-limiting library for Python. Supports **token buc
 ## Features
 
 - **3 algorithms** — fixed window, sliding window log, token bucket — selectable at construction time
-- **2 backends** — in-memory (single-process, ~70k ops/s) and Redis (distributed, ~27k ops/s via atomic Lua scripts)
+- **2 backends** — in-memory (single-process, ~70k ops/s) and Redis (distributed, ~29k ops/s via atomic Lua scripts)
 - **ASGI middleware** — drop into any FastAPI/Starlette app with `X-RateLimit-*` headers, `429` responses, and `Retry-After`
 - **Async-native** — built on `asyncio` and `redis-py` async; no blocking calls
 - **Bring-your-own Redis** — the caller owns the `redis.asyncio.Redis` instance and its lifecycle
@@ -201,7 +201,7 @@ Microbenchmark results on Apple Silicon (M-series), Python 3.14.2, Redis 7 on lo
 ### Key observations
 
 - **In-memory throughput is ~8x higher than Redis** (~70k vs ~8k ops/s at concurrency=1) because Redis operations pay a network round-trip (~100 µs) even on localhost.
-- **Redis throughput scales 3x with concurrency** (8k → 27k ops/s from c=1 → c=50) because asyncio coroutines overlap I/O waits. It plateaus as Redis's single-threaded command processing saturates.
+- **Redis throughput scales 3x with concurrency** (8k → 29k ops/s from c=1 → c=50) because asyncio coroutines overlap I/O waits. It plateaus as Redis's single-threaded command processing saturates.
 - **In-memory throughput is flat across concurrency** because asyncio is single-threaded — all coroutines serialize through `asyncio.Lock`.
 - **Sliding window is the most memory-expensive** at O(N) per client. With 50k max_requests, a single key uses 6.4 MB. Fixed window and token bucket use O(1) space regardless of request volume.
 
@@ -228,7 +228,7 @@ The test suite includes:
 - **Middleware tests** — 429 responses, `X-RateLimit-*` headers, `Retry-After`, fail-open/closed
 - **Edge-case tests** — zero/negative config validation
 
-55 tests total, all passing in CI with a Redis service container.
+64 tests total, all passing in CI with a Redis service container.
 
 ## Development
 
@@ -274,7 +274,7 @@ rate_limiter/
     ├── fixed_window.py         # Lua: INCR + EXPIRE
     ├── sliding_window.py       # Lua: sorted set log
     └── token_bucket.py         # Lua: hash + TIME + refill math
-tests/                          # 55 tests — behavioral, integration, concurrency, middleware
+tests/                          # 64 tests — behavioral, integration, concurrency, middleware
 benchmarks/                     # Async microbenchmark harness + chart generation
 ```
 
